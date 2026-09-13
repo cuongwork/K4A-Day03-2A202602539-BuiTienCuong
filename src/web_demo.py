@@ -9,6 +9,48 @@ from uuid import uuid4
 
 from mcp_server import MCPAcademicServer
 from tools import QC_DATABASE
+from app import run_react_agent
+from providers import get_llm_provider
+
+
+class LiveDemoProvider:
+    """Real OpenAI requests only; errors never fall back to the offline mock."""
+    def __init__(self):
+        from openai import OpenAI
+        configured = get_llm_provider()
+        if configured.__class__.__name__ != 'OpenAIProvider':
+            raise ValueError('Demo chat cần LLM_PROVIDER=openai và OPENAI_API_KEY hợp lệ.')
+        self.model_name = configured.model_name
+        self.client = OpenAI(api_key=configured.api_key, timeout=25, max_retries=0)
+        self.api_calls = 0
+
+    def generate_with_tools(self, prompt, tools_schema, system_prompt=''):
+        response = self.client.chat.completions.create(
+            model=self.model_name, temperature=0,
+            messages=[{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': prompt}],
+            tools=[{'type': 'function', 'function': s} for s in tools_schema],
+            parallel_tool_calls=False,
+        )
+        self.api_calls += 1
+        message = response.choices[0].message
+        if message.tool_calls:
+            call = message.tool_calls[0]
+            return {'type': 'tool_call', 'tool_name': call.function.name,
+                    'arguments': json.loads(call.function.arguments)}
+        return {'type': 'text', 'content': message.content or ''}
+
+
+class DemoAgentServer(MCPAcademicServer):
+    def __init__(self):
+        super().__init__()
+        self.created_tickets = []
+
+    def call_tool(self, name, arguments):
+        result = super().call_tool(name, arguments)
+        if name == 'create_rework_ticket' and result['result'].get('status') == 'SUCCESS':
+            result['result']['ticket_id'] = f'RW-{uuid4().hex[:12].upper()}'
+            self.created_tickets.append(result['result'])
+        return result
 
 
 class QCHandler(BaseHTTPRequestHandler):
@@ -36,7 +78,8 @@ class QCHandler(BaseHTTPRequestHandler):
             self.respond(404, {"error": "Không tìm thấy đường dẫn."})
 
     def do_POST(self):
-        if urlsplit(self.path).path != "/api/tool":
+        route = urlsplit(self.path).path
+        if route not in ("/api/tool", "/api/agent"):
             self.respond(404, {"error": "Không tìm thấy đường dẫn."})
             return
         if self.headers.get("Origin") not in (None, f"http://{self.headers.get('Host')}"):
@@ -49,6 +92,29 @@ class QCHandler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError("Yêu cầu phải là một object JSON.")
+            if route == '/api/agent':
+                query = data.get('message')
+                if not isinstance(query, str) or not query.strip() or len(query) > 3000:
+                    raise ValueError('Nhập yêu cầu từ 1 đến 3000 ký tự.')
+                provider = LiveDemoProvider()
+                mcp = DemoAgentServer()
+                try:
+                    traces = run_react_agent(query.strip(), provider, mcp)
+                    final = traces[-1] if traces else {}
+                    self.respond(200, {'answer': final.get('output', 'Chưa có phản hồi.'),
+                                       'completed': final.get('action_type') == 'FINAL_ANSWER',
+                                       'traces': traces, 'tickets': mcp.created_tickets,
+                                       'provider': 'OpenAI', 'model': provider.model_name,
+                                       'api_calls': provider.api_calls,
+                                       'mcp_calls': sum(t['action_type'] == 'TOOL_EXECUTION' for t in traces)})
+                except Exception as error:
+                    self.respond(502, {'error': 'Không hoàn tất được yêu cầu với OpenAI. Kiểm tra kết nối mạng, API key hoặc hạn mức. Không sử dụng kết quả Mock.',
+                                       'error_type': type(error).__name__,
+                                       'tickets': mcp.created_tickets,
+                                       'api_calls': provider.api_calls})
+                finally:
+                    provider.client.close()
+                return
             name, args = data.get("tool"), data.get("arguments")
             schemas = {s["name"]: s for s in MCPAcademicServer().list_tools()}
             if name not in ("qc_query", "create_rework_ticket") or name not in schemas:
