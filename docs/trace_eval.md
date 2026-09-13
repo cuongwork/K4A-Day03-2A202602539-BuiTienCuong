@@ -17,10 +17,15 @@
 | **TỔNG ĐIỂM AGENTIC FIT** | 17 **/ 20** | *Nếu tổng điểm > 12/20: Bài toán rất phù hợp triển khai Agentic System.* |
 
 ---
-
 ## 2. TRÍCH XUẤT KẾT QUẢ WATERFALL TRACE LOG (SAU KHI CHẠY TEST SUITE TRÊN API THẬT)
+
+> ⚠️ **YÊU CẦU NGHIỆM THU:** Mở tệp `.env` điền `GEMINI_API_KEY` (hoặc `OPENAI_API_KEY`) để kết nối LLM thật trước khi thực thi `python src/app.py --all`. Bài nộp chỉ dùng Mock Offline Provider sẽ không đạt điểm nghiệm thực tế.
+
+Dán 1 đoạn trích xuất log tiêu biểu từ file `docs/trace_waterfall.json` sinh ra từ phản hồi LLM API thật:
+
+```json
 [
-{
+  {
     "step": 1,
     "query": "Hãy tạo phiếu Rework cho ca kiểm định QC-2026-0913-03, lỗi gán nhãn 3D sai vị trí Bounding Box tại Frame 125, mức độ lỗi Major.",
     "action_type": "TOOL_EXECUTION",
@@ -99,9 +104,18 @@
     "run_at": "2026-09-13T04:31:07.718329+00:00",
     "source_artifact": "docs/live_demo_check.json"
   }
-  ]
+]
+```
+
+---
+
 ## 3. TỔNG KẾT KẾT QUẢ NGHIỆM THU & NỘP BÀI
-[ v] Đã điền API Key thật trong .env và xác nhận Agent chạy mượt mà trên LLM API thật (Gemini/OpenAI).
-Tổng số Test Cases đã chạy thành công: 5 / 5 test cases.
-Số lượt gọi Tool qua MCP Server chính xác: 5 lượt.
-Kết quả đẩy Repo nộp bài: [v ] Đã Commit và Push mã nguồn thành công lên GitHub cá nhân.
+
+- [ v] Đã điền API Key thật trong `.env` và xác nhận Agent chạy mượt mà trên LLM API thật (Gemini/OpenAI).
+- **Tổng số Test Cases đã chạy thành công:** 5 / 5 test cases.
+- **Số lượt gọi Tool qua MCP Server chính xác:** 5 lượt.
+- **Kết quả đẩy Repo nộp bài:** [v ] Đã Commit và Push mã nguồn thành công lên GitHub cá nhân.
+
+---
+
+> ✅ **HOÀN TẤT NỘP BÀI:** Sao chép đường link GitHub Repository cá nhân của bạn và dán vào ô nộp bài trên hệ thống LMS VLearn để hoàn tất Bài Lab 3!
