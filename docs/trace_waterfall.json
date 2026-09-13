@@ -1,44 +1,10 @@
 [
   {
     "step": 1,
-    "query": "Hãy tra cứu thông tin ca QC-2026-0913-05",
-    "action_type": "TOOL_EXECUTION",
-    "tool_name": "qc_query",
-    "arguments": {
-      "qc_case_id": "QC-2026-0913-05"
-    },
-    "observation": {
-      "status": "SUCCESS",
-      "qc_case_id": "QC-2026-0913-05",
-      "data": {
-        "qc_case_id": "QC-2026-0913-05",
-        "status": "IN_REVIEW",
-        "annotation_errors": [
-          {
-            "annotation_type": "2D",
-            "frame": 42,
-            "error_type": "Màu nhãn không khớp",
-            "severity": "Minor",
-            "responsible_person": "Trần Thị Bình"
-          },
-          {
-            "annotation_type": "3D",
-            "frame": 89,
-            "error_type": "Bounding Box lệch góc",
-            "severity": "Critical",
-            "responsible_person": "Nguyễn Văn An"
-          }
-        ]
-      }
-    },
-    "latency_ms": 0.14
-  },
-  {
-    "step": 2,
-    "query": "Hãy tra cứu thông tin ca QC-2026-0913-05",
+    "query": "tôi đói quá",
     "action_type": "FINAL_ANSWER",
-    "thought": "Tổng hợp kết quả từ MCP Server thành công.",
-    "output": "Ca kiểm định QC-2026-0913-05 đang ở trạng thái IN_REVIEW. Danh sách lỗi gán nhãn:\n- 2D: Frame 42, Màu nhãn không khớp, mức độ Minor, người phụ trách Trần Thị Bình\n- 3D: Frame 89, Bounding Box lệch góc, mức độ Critical, người phụ trách Nguyễn Văn An",
-    "latency_ms": 10.0
+    "thought": "Câu hỏi chung về kiểm định chất lượng, trả lời trực tiếp không cần gọi Tool.",
+    "output": "[Mock Agent Response]: Tôi là QC Assistant. Tôi có thể tra cứu ca kiểm định 2D/3D và tạo phiếu Rework khi bạn cung cấp mã ca kiểm định và mô tả lỗi.",
+    "latency_ms": 0.29
   }
 ]
