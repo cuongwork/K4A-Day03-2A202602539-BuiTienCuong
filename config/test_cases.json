@@ -2,8 +2,8 @@
   {
     "id": "TC01",
     "type": "direct_query",
-    "question": "Chào bạn, bạn có thể giới thiệu quy chế học vụ cơ bản của Đại học VinUni không?",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ System Prompt, không cần gọi bất kỳ Tool nào.",
+    "question": "Hãy giới thiệu quy trình kiểm định chất lượng gán nhãn 2D/3D và khi nào cần tạo phiếu Rework.",
+    "expected_behavior": "Agent giải thích quy trình QC và mục đích phiếu Rework bằng kiến thức chung; không gọi công cụ hoặc bịa thông tin ca cụ thể.",
     "complexity": "Low"
   },
   {
@@ -16,8 +16,8 @@
   {
     "id": "TC03",
     "type": "rework_creation",
-    "question": "Hãy tạo phiếu Rework cho ca kiểm định QC-2026-0913-03, lỗi gán nhãn 3D sai vị trí Bounding Box tại Frame 125, mức độ lỗi Major. Người phụ trách kiểm định là Nguyễn Văn An.",
-    "expected_behavior": "Agent tự động phát sinh Tool Call 'create_rework_ticket' với đúng mã ca kiểm định, loại dữ liệu 3D, Frame lỗi, loại lỗi, mức độ lỗi và thông tin người phụ trách.",
+    "question": "Hãy tạo phiếu Rework cho ca kiểm định QC-2026-0913-03, lỗi gán nhãn 3D sai vị trí Bounding Box tại Frame 125, mức độ lỗi Major.",
+    "expected_behavior": "Agent gọi qc_query trước, sau đó gọi create_rework_ticket với đúng bốn tham số: qc_case_id=QC-2026-0913-03, annotation_type=3D, error_description mô tả Bounding Box sai vị trí tại Frame 125, severity=Major. Không truyền tham số người phụ trách vì schema không có trường này.",
     "complexity": "Medium"
   },
   {
@@ -31,7 +31,7 @@
     "id": "TC05",
     "type": "edge_case_handling",
     "question": "Hãy tra cứu thông tin lỗi gán nhãn của ca kiểm định QC-INVALID-99999 và cho tôi biết những lỗi nào cần Rework.",
-    "expected_behavior": "Agent gọi Tool tra cứu ca kiểm định, nhận kết quả NOT_FOUND và phản hồi rõ ràng rằng không tìm thấy ca kiểm định QC-INVALID-99999. Agent không được tự tạo thông tin lỗi, không được kết luận có lỗi cần Rework và không được tạo phiếu Rework.",
+    "expected_behavior": "Agent gọi qc_query, nhận NOT_FOUND và phản hồi không tìm thấy QC-INVALID-99999; chưa thể xác định lỗi hoặc nhu cầu Rework do thiếu dữ liệu. Không kết luận có lỗi hay không có lỗi; không tạo phiếu Rework.",
     "complexity": "Medium"
   }
 ]

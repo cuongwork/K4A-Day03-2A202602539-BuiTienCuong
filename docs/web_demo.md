@@ -28,4 +28,24 @@ Demo chỉ dùng thư viện chuẩn Python, không cần cài thêm dependency.
 
 ## Kiểm tra đã thực hiện
 
+## Kịch bản trình diễn API thật
+
+Web hiện là giao diện thao tác công cụ, không có ô chat gọi LLM. Để trình diễn Agent tự chọn công cụ với OpenAI thật, dùng terminal bên cạnh giao diện web:
+
+```powershell
+.\.venv\Scripts\python.exe -B src/check_live_demo.py
+```
+
+Lệnh này chạy 5 ca bằng API thật, tắt fallback Mock, kiểm tra luồng công cụ và ghi `docs/live_demo_check.json`. Mỗi lượt có thể phát sinh nhiều yêu cầu LLM vì Agent nhận lại Observation trước khi quyết định bước tiếp theo. Cần mạng truy cập OpenAI và API key hợp lệ trong `.env` với `LLM_PROVIDER=openai`. Không hiển thị `.env` khi trình chiếu.
+
+Kịch bản demo khoảng 3 phút:
+
+1. Mở web, chọn `QC-2026-0913-05`, chỉ ra lỗi Minor ở frame 42 và Critical ở frame 89.
+2. Chọn lỗi 3D ở frame 89, tạo phiếu, xem mục Phiếu Rework và xuất JSON.
+3. Chạy lệnh kiểm tra live ở trên. Giải thích TC04: LLM gọi `qc_query`, nhận dữ liệu, gọi `create_rework_ticket` cho lỗi Critical, rồi trả lời mã phiếu.
+4. Chỉ ra TC05: mã không tồn tại phải trả `NOT_FOUND`, không tạo phiếu.
+5. Mở báo cáo để xem `live_api_successes`, `mcp_calls` và kết quả từng ca. Đây là kiểm tra luồng công cụ, không phải chứng nhận mọi nội dung câu trả lời đều đúng.
+
+API LLM là thật; dữ liệu QC và việc tạo Rework vẫn mô phỏng. Phiếu tạo trong terminal không tự xuất hiện trong localStorage của web.
+
 Trang chủ và API danh sách trả HTTP 200; tra cứu qua MCP trả đúng ca; tạo phiếu trả kết quả thành công và mã riêng biệt; đầu vào sai mức độ, sai loại nhãn, mô tả trống và mã ca không tồn tại đều bị từ chối. JavaScript đã qua kiểm tra cú pháp. Chưa kiểm thử tương tác trực tiếp trên trình duyệt.

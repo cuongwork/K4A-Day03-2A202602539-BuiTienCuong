@@ -216,7 +216,8 @@ class OpenAIProvider(BaseLLMProvider):
                 model=self.model_name,
                 messages=messages,
                 tools=tools if tools else None,
-                tool_choice="auto" if tools else None
+                tool_choice="auto" if tools else None,
+                temperature=0
             )
 
             msg = response.choices[0].message
