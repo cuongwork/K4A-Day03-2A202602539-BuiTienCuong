@@ -1,29 +1,44 @@
 [
   {
     "step": 1,
-    "query": "Chào bạn, bạn có thể giới thiệu quy chế học vụ cơ bản của Đại học VinUni không?",
-    "action_type": "FINAL_ANSWER",
-    "thought": "Câu hỏi chung về quy chế học vụ, trả lời trực tiếp không cần gọi Tool.",
-    "output": "[Mock Agent Response]: Xin chào! Quy chế học vụ VinUni yêu cầu sinh viên tích lũy tối thiểu 120 tín chỉ và duy trì GPA trên 2.0 để tốt nghiệp.",
-    "latency_ms": 2845.93
-  },
-  {
-    "step": 1,
-    "query": "Hãy tra cứu thông tin học vụ của sinh viên SV2026001.",
+    "query": "Hãy tra cứu thông tin ca QC-2026-0913-05",
     "action_type": "TOOL_EXECUTION",
-    "tool_name": "academic_query",
+    "tool_name": "qc_query",
     "arguments": {
-      "student_id": "SV2026001"
+      "qc_case_id": "QC-2026-0913-05"
     },
-    "observation": {},
-    "latency_ms": 799.12
+    "observation": {
+      "status": "SUCCESS",
+      "qc_case_id": "QC-2026-0913-05",
+      "data": {
+        "qc_case_id": "QC-2026-0913-05",
+        "status": "IN_REVIEW",
+        "annotation_errors": [
+          {
+            "annotation_type": "2D",
+            "frame": 42,
+            "error_type": "Màu nhãn không khớp",
+            "severity": "Minor",
+            "responsible_person": "Trần Thị Bình"
+          },
+          {
+            "annotation_type": "3D",
+            "frame": 89,
+            "error_type": "Bounding Box lệch góc",
+            "severity": "Critical",
+            "responsible_person": "Nguyễn Văn An"
+          }
+        ]
+      }
+    },
+    "latency_ms": 0.14
   },
   {
     "step": 2,
-    "query": "Hãy tra cứu thông tin học vụ của sinh viên SV2026001.",
+    "query": "Hãy tra cứu thông tin ca QC-2026-0913-05",
     "action_type": "FINAL_ANSWER",
     "thought": "Tổng hợp kết quả từ MCP Server thành công.",
-    "output": "Chưa thể trả lời chi tiết do chưa nhận được dữ liệu từ MCP Server (hãy hoàn thành TODO 2.1).",
+    "output": "Ca kiểm định QC-2026-0913-05 đang ở trạng thái IN_REVIEW. Danh sách lỗi gán nhãn:\n- 2D: Frame 42, Màu nhãn không khớp, mức độ Minor, người phụ trách Trần Thị Bình\n- 3D: Frame 89, Bounding Box lệch góc, mức độ Critical, người phụ trách Nguyễn Văn An",
     "latency_ms": 10.0
   }
 ]

@@ -11,41 +11,47 @@ from typing import Dict, Any
 # ==============================================================================
 
 TOOLS_SCHEMA = [
-    # Tool 1: Đã được định nghĩa mẫu sẵn cho Học viên tham khảo
     {
-        "name": "academic_query",
-        "description": "Tra cứu hồ sơ và thông tin học vụ của sinh viên VinUni bằng mã sinh viên.",
+        "name": "qc_query",
+        "description": "Tra cứu thông tin ca kiểm định và các lỗi gán nhãn 2D/3D bằng mã ca kiểm định.",
         "parameters": {
             "type": "object",
             "properties": {
-                "student_id": {
+                "qc_case_id": {
                     "type": "string",
-                    "description": "Mã sinh viên cần tra cứu (ví dụ: 'SV2026001')"
+                    "description": "Mã ca kiểm định cần tra cứu (ví dụ: 'QC2026001')"
                 }
             },
-            "required": ["student_id"]
+            "required": ["qc_case_id"]
         }
     },
-    
-    # --------------------------------------------------------------------------
-    # TODO 1.2: HỌC VIÊN HOÀN THIỆN TOOL SCHEMA CHO 'schedule_appointment'
-    # 🎯 YÊU CẦU THIẾT KẾ SCHEMA (JSON SCHEMA STANDARD):
-    # 1. Tool dùng để đặt lịch hẹn tư vấn học vụ với Cố vấn học tập VinUni.
-    # 2. Thiết kế các tham số (properties) để LLM trích xuất:
-    #    - student_id (string): Mã sinh viên cần đặt lịch (ví dụ: 'SV2026001')
-    #    - datetime_str (string): Thời gian hẹn (ví dụ: '14:00 15/09/2026')
-    #    - advisor_name (string): Tên cố vấn học tập
-    # 3. Khai báo danh sách các trường bắt buộc (required).
-    # --------------------------------------------------------------------------
+    # TODO 1.2: Đã hoàn thiện schema cho create_rework_ticket.
     {
-        "name": "schedule_appointment",
-        "description": "Đặt lịch hẹn tư vấn học vụ với Cố vấn học tập VinUni.",
+        "name": "create_rework_ticket",
+        "description": "Tạo phiếu Rework cho ca kiểm định có lỗi gán nhãn 2D/3D cần xử lý lại. Sử dụng qc_query để tra cứu ca kiểm định trước khi tạo phiếu.",
         "parameters": {
             "type": "object",
             "properties": {
-                # TODO 1.2: Khai báo các thuộc tính tham số cho Tool tại đây...
+                "qc_case_id": {
+                    "type": "string",
+                    "description": "Mã ca kiểm định cần Rework (ví dụ: 'QC2026001')"
+                },
+                "annotation_type": {
+                    "type": "string",
+                    "enum": ["2D", "3D"],
+                    "description": "Loại dữ liệu gán nhãn: 2D hoặc 3D."
+                },
+                "error_description": {
+                    "type": "string",
+                    "description": "Mô tả lỗi gán nhãn cần xử lý lại."
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": ["Minor", "Major", "Critical"],
+                    "description": "Mức độ nghiêm trọng của lỗi: Minor, Major hoặc Critical."
+                }
             },
-            "required": [] # TODO 1.2: Khai báo danh sách các trường bắt buộc tại đây...
+            "required": ["qc_case_id", "annotation_type", "error_description", "severity"]
         }
     }
 ]
@@ -103,7 +109,88 @@ def execute_schedule_appointment(student_id: str, datetime_str: str, advisor_nam
 
 
 # Router gọi tool thực tế
+QC_DATABASE = {
+    "QC-2026-0913-03": {
+        "qc_case_id": "QC-2026-0913-03",
+        "status": "IN_REVIEW",
+        "annotation_errors": [
+            {
+                "annotation_type": "3D",
+                "frame": 125,
+                "error_type": "Bounding Box sai vị trí",
+                "severity": "Major",
+                "responsible_person": "Nguyễn Văn An"
+            }
+        ]
+    },
+    "QC-2026-0913-05": {
+        "qc_case_id": "QC-2026-0913-05",
+        "status": "IN_REVIEW",
+        "annotation_errors": [
+            {
+                "annotation_type": "2D",
+                "frame": 42,
+                "error_type": "Màu nhãn không khớp",
+                "severity": "Minor",
+                "responsible_person": "Trần Thị Bình"
+            },
+            {
+                "annotation_type": "3D",
+                "frame": 89,
+                "error_type": "Bounding Box lệch góc",
+                "severity": "Critical",
+                "responsible_person": "Nguyễn Văn An"
+            }
+        ]
+    }
+}
+
+
+def execute_qc_query(qc_case_id: str) -> str:
+    """Tra cứu ca kiểm định trong dữ liệu mô phỏng."""
+    case_id = qc_case_id.strip()
+    case = QC_DATABASE.get(case_id)
+    if case:
+        return json.dumps({
+            "status": "SUCCESS",
+            "qc_case_id": case_id,
+            "data": case
+        }, ensure_ascii=False)
+    return json.dumps({
+        "status": "NOT_FOUND",
+        "message": f"Không tìm thấy ca kiểm định có mã '{qc_case_id}'"
+    }, ensure_ascii=False)
+
+
+def execute_create_rework_ticket(qc_case_id: str, annotation_type: str,
+                                 error_description: str, severity: str) -> str:
+    """Mô phỏng tạo phiếu Rework, chưa lưu vào hệ thống bên ngoài."""
+    from uuid import uuid4
+
+    case_id = qc_case_id.strip()
+    case = QC_DATABASE.get(case_id)
+    if not case:
+        raise ValueError(f"Không tìm thấy ca kiểm định '{qc_case_id}'.")
+    if annotation_type not in ("2D", "3D"):
+        raise ValueError("annotation_type phải là 2D hoặc 3D.")
+    if severity not in ("Minor", "Major", "Critical"):
+        raise ValueError("severity phải là Minor, Major hoặc Critical.")
+    if not error_description.strip():
+        raise ValueError("Mô tả lỗi không được để trống.")
+
+    return json.dumps({
+        "status": "SUCCESS",
+        "ticket_id": f"RW-{case_id}-{severity.upper()}",
+        "qc_case_id": case_id,
+        "annotation_type": annotation_type,
+        "error_description": error_description.strip(),
+        "severity": severity,
+        "ticket_status": "Pending"
+    }, ensure_ascii=False)
+
 TOOL_ROUTER = {
+    "qc_query": execute_qc_query,
+    "create_rework_ticket": execute_create_rework_ticket,
     "academic_query": execute_academic_query,
     "schedule_appointment": execute_schedule_appointment
 }

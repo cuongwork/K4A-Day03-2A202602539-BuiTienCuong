@@ -36,28 +36,57 @@ class MockOfflineProvider(BaseLLMProvider):
 
     def generate_with_tools(self, prompt: str, tools_schema: List[Dict[str, Any]], system_prompt: str = "") -> Dict[str, Any]:
         prompt_lower = prompt.lower()
-        
-        # Mô phỏng nhận diện intent gọi Tool
-        if "sv2026001" in prompt_lower and "đặt lịch" in prompt_lower:
+
+        qc_case_id = None
+        for token in prompt.split():
+            token_clean = token.strip(".,!?()[]{}\"")
+            if token_clean.lower().startswith("qc-"):
+                qc_case_id = token_clean
+                break
+
+        if "tạo phiếu rework" in prompt_lower or "rework" in prompt_lower:
+            if qc_case_id:
+                annotation_type = "3D" if "3d" in prompt_lower else "2D" if "2d" in prompt_lower else "3D"
+                severity = "Critical" if "critical" in prompt_lower else "Major" if "major" in prompt_lower else "Minor"
+                error_description = "Lỗi gán nhãn cần xử lý lại"
+                if "frame" in prompt_lower and "sai vị trí" in prompt_lower:
+                    error_description = "Bounding Box sai vị trí tại Frame 125"
+                elif "màu nhãn" in prompt_lower:
+                    error_description = "Màu nhãn không khớp"
+
+                return {
+                    "type": "tool_call",
+                    "tool_name": "create_rework_ticket",
+                    "arguments": {
+                        "qc_case_id": qc_case_id,
+                        "annotation_type": annotation_type,
+                        "error_description": error_description,
+                        "severity": severity
+                    },
+                    "thought": f"Người dùng cần tạo phiếu Rework cho ca kiểm định {qc_case_id}. Tôi sẽ gọi tool create_rework_ticket."
+                }
+
+        if qc_case_id and ("tra cứu" in prompt_lower or "lỗi" in prompt_lower or "ca kiểm định" in prompt_lower or "thông tin" in prompt_lower):
             return {
                 "type": "tool_call",
-                "tool_name": "schedule_appointment",
-                "arguments": {"student_id": "SV2026001", "datetime_str": "14:00 15/09/2026", "advisor_name": "PGS.TS Nguyễn Văn A"},
-                "thought": "Người dùng yêu cầu đặt lịch hẹn tư vấn cho sinh viên SV2026001. Tôi sẽ gọi tool schedule_appointment."
+                "tool_name": "qc_query",
+                "arguments": {"qc_case_id": qc_case_id},
+                "thought": f"Người dùng muốn tra cứu thông tin ca kiểm định {qc_case_id}. Tôi sẽ gọi tool qc_query."
             }
-        elif "sv2026001" in prompt_lower or "tra cứu" in prompt_lower:
+
+        if "qc-" in prompt_lower:
             return {
                 "type": "tool_call",
-                "tool_name": "academic_query",
-                "arguments": {"student_id": "SV2026001"},
-                "thought": "Người dùng muốn tra cứu thông tin học vụ của sinh viên SV2026001. Tôi sẽ gọi tool academic_query."
+                "tool_name": "qc_query",
+                "arguments": {"qc_case_id": qc_case_id or "QC-2026-0913-03"},
+                "thought": "Người dùng đề cập đến một ca kiểm định QC. Tôi sẽ gọi tool qc_query để tra cứu dữ liệu trước khi đưa ra phản hồi."
             }
-        else:
-            return {
-                "type": "text",
-                "content": f"[Mock Agent Response]: Xin chào! Quy chế học vụ VinUni yêu cầu sinh viên tích lũy tối thiểu 120 tín chỉ và duy trì GPA trên 2.0 để tốt nghiệp.",
-                "thought": "Câu hỏi chung về quy chế học vụ, trả lời trực tiếp không cần gọi Tool."
-            }
+
+        return {
+            "type": "text",
+            "content": "[Mock Agent Response]: Tôi là QC Assistant. Tôi có thể tra cứu ca kiểm định 2D/3D và tạo phiếu Rework khi bạn cung cấp mã ca kiểm định và mô tả lỗi.",
+            "thought": "Câu hỏi chung về kiểm định chất lượng, trả lời trực tiếp không cần gọi Tool."
+        }
 
 
 class GeminiProvider(BaseLLMProvider):

@@ -16,22 +16,22 @@
   {
     "id": "TC03",
     "type": "rework_creation",
-    "question": "Hãy tạo phiếu Rework cho ca kiểm định QC-2026-0913-03, lỗi gán nhãn 3D sai vị trí Bounding Box tại Frame 125, mức độ lỗi Major.",
-    "expected_behavior": "Agent tự động phát sinh Tool Call 'create_rework_ticket' với đúng mã ca kiểm định, loại dữ liệu 3D, mô tả lỗi và mức độ lỗi.",
+    "question": "Hãy tạo phiếu Rework cho ca kiểm định QC-2026-0913-03, lỗi gán nhãn 3D sai vị trí Bounding Box tại Frame 125, mức độ lỗi Major. Người phụ trách kiểm định là Nguyễn Văn An.",
+    "expected_behavior": "Agent tự động phát sinh Tool Call 'create_rework_ticket' với đúng mã ca kiểm định, loại dữ liệu 3D, Frame lỗi, loại lỗi, mức độ lỗi và thông tin người phụ trách.",
     "complexity": "Medium"
   },
   {
     "id": "TC04",
     "type": "multi_step_reasoning",
     "question": "Kiểm tra các lỗi gán nhãn của ca QC-2026-0913-05. Nếu có lỗi mức độ Major hoặc Critical thì hãy lấy thông tin chi tiết của các lỗi đó và tạo phiếu Rework cho ca kiểm định.",
-    "expected_behavior": "Agent thực hiện chuỗi ReAct đa bước: gọi Tool tra cứu ca kiểm định -> lấy danh sách lỗi gán nhãn 2D/3D -> phân tích mức độ lỗi -> nếu phát hiện lỗi Major hoặc Critical thì tạo phiếu Rework với dữ liệu tương ứng.",
+    "expected_behavior": "Agent thực hiện chuỗi ReAct đa bước: gọi Tool tra cứu ca kiểm định -> lấy danh sách lỗi gán nhãn 2D/3D -> phân tích mức độ lỗi -> nếu phát hiện lỗi Major hoặc Critical thì lấy thông tin chi tiết -> gọi Tool tạo phiếu Rework với dữ liệu tương ứng. Nếu không có lỗi thỏa điều kiện thì không được tạo phiếu Rework.",
     "complexity": "High"
   },
   {
     "id": "TC05",
     "type": "edge_case_handling",
     "question": "Hãy tra cứu thông tin lỗi gán nhãn của ca kiểm định QC-INVALID-99999 và cho tôi biết những lỗi nào cần Rework.",
-    "expected_behavior": "Agent gọi Tool tra cứu ca kiểm định, nhận kết quả NOT_FOUND và phản hồi rõ ràng rằng không tìm thấy ca kiểm định QC-INVALID-99999. Agent không được tự tạo thông tin lỗi hoặc tạo phiếu Rework.",
+    "expected_behavior": "Agent gọi Tool tra cứu ca kiểm định, nhận kết quả NOT_FOUND và phản hồi rõ ràng rằng không tìm thấy ca kiểm định QC-INVALID-99999. Agent không được tự tạo thông tin lỗi, không được kết luận có lỗi cần Rework và không được tạo phiếu Rework.",
     "complexity": "Medium"
   }
 ]
